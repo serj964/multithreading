@@ -1,2 +1,2 @@
 # multithreading
-multithreading - an acronis course
+multithreading - acronis course
