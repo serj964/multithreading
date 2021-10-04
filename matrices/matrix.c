@@ -60,7 +60,10 @@ Matrix* read_matrix(const char * path)
 	FILE* file_matrix = fopen(path, "r");
 	int height, width;
 	if (NULL == file_matrix)
-		printf("empty file\n");
+	{
+    	printf("empty file\n");
+    	exit(-1);
+    }
 	fscanf(file_matrix, "%d%d", &height, &width);
 	Matrix* m = create_matrix(height, width);
 	for (int i = 0; i < m->height; i++)
@@ -138,6 +141,7 @@ int process_calculations(void* args)
 
 void blocks_multiplication(Matrix* a, Matrix* b, Matrix* c, int number_of_threads)
 {
+	int cr, jo;
 	int block_size = get_block_size();
 	int number_of_blocks_per_row = (a->height / block_size);
 	int number_of_blocks_per_column = (a->width / block_size);
@@ -167,10 +171,20 @@ void blocks_multiplication(Matrix* a, Matrix* b, Matrix* c, int number_of_thread
 		args->number_of_blocks = number_of_blocks_per_thread;
 		args->block_size = block_size;
 		args->number_of_blocks_per_row = number_of_blocks_per_row;
-		thrd_create(&threads[i], process_calculations, (void *) args);
+		cr = thrd_create(&threads[i], process_calculations, (void *) args);
+		if (cr)
+		{
+            printf("ERROR; return code from thrd_create() is %d\n", cr);
+            exit(-1);
+        }
 	}
 	for (int i = 0; i < number_of_threads; i++)
-		thrd_join(threads[i], NULL);
+		jo = thrd_join(threads[i], NULL);
+		if (jo)
+		{
+            printf("ERROR; return code from thrd_join() is %d\n", jo);
+            exit(-1);
+        }
 	free(threads);
 	for (int i = 0; i < number_of_threads; i++)
 		free(blocks[i]);
