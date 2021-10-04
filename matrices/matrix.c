@@ -31,7 +31,7 @@ struct args
 {
 	Matrix* a;
 	Matrix* b;
-	Matrix* c; //результат перемножения
+	Matrix* c;
 	Block* blocks;
 	int number_of_blocks, block_size, number_of_blocks_per_row;
 };
@@ -60,7 +60,7 @@ Matrix* read_matrix(const char * path)
 	FILE* file_matrix = fopen(path, "r");
 	int height, width;
 	if (NULL == file_matrix)
-		printf("GG\n");
+		printf("empty file\n");
 	fscanf(file_matrix, "%d%d", &height, &width);
 	Matrix* m = create_matrix(height, width);
 	for (int i = 0; i < m->height; i++)

@@ -9,7 +9,6 @@ pthread_mutex_t mutex;
 int array[400];
 int in = 0;
 
-
 void *Write(void *threadid)
 {
     int tid = (long)threadid + 1;
@@ -24,7 +23,6 @@ void *Write(void *threadid)
     pthread_exit(NULL);
 }
 
-
 void *Read(void *threadid)
 {
     int tid = (long)threadid + 1;
@@ -33,35 +31,33 @@ void *Read(void *threadid)
     FILE* desc;
     if ((desc = fopen(text, "w")) == NULL)
     {
-	printf("ERROR: failed to open file for writing");
-	getchar();
-	return 0;
+    	printf("ERROR: failed to open file for writing");
+    	getchar();
+    	return 0;
     }
     for (int i = 0; i < SIZE; i++)
     {
-	pthread_mutex_lock(&mutex);
-	if (array[in] == tid)
-	{
-	    printf("%d) me is %d writing %d\n", in+1, tid, array[in]);
+    	pthread_mutex_lock(&mutex);
+    	if (array[in] == tid)
+    	{
+    	    printf("%d: I'm %d and writing %d\n", in+1, tid, array[in]);
             fprintf(desc, "%d ", array[in]);
             ++in;
-	}
-	else
-	    i--;
-	pthread_mutex_unlock(&mutex);
+    	}
+    	else
+    	    i--;
+    	pthread_mutex_unlock(&mutex);
         usleep(timeskip);
     }
     fclose(desc);
     pthread_exit(NULL);
 }
 
-
 int main (int argc, char *argv[])
 {
     int wc, wj, rc, rj;
     pthread_t threads[NUM_THREADS];
     pthread_mutex_init(&mutex, NULL);
-
     for (int t=0; t<NUM_THREADS; ++t)
     {
         wc = pthread_create(&threads[t], NULL, Write, (void *)t);

@@ -2,11 +2,9 @@
 #include <thread>
 #include <mutex>
 #include <vector>
-#include <iostream>
 #include <cassert>
 #include <climits>
 #include <chrono>
-
 
 struct Backoff {
 public:
