@@ -6,30 +6,20 @@
 #include <climits>
 #include <chrono>
 
+using namespace std::chrono_literals;
 struct Backoff {
+
 public:
     inline void operator()() {
 #ifdef __GNUC__
         __asm volatile ("pause");
 #endif
-        if (++iteration_num == limit) {
-#ifdef __GNUC__
-            __asm volatile ("pause");
-#endif
-            iteration_num = 0;
-            limit = (limit >= min) ? limit * 100 / 85 : min;
-            std::this_thread::yield();
-        }
-
-#ifdef __GNUC__
-        __asm volatile ("pause");
-#endif
+        std::this_thread::sleep_for(sleep_for_);
+        sleep_for_ *= 2;
     }
 
 private:
-    int min = 45000;
-    int limit = 100'000;
-    int iteration_num = 0;
+    std::chrono::duration<long, std::ratio<1, 1000>> sleep_for_ = 1ms;
 };
 
 
@@ -39,25 +29,16 @@ private:
 
 public:
     TTAS() : locked(false) {}
-
     void lock() {
-
         bool flag = false;
         Backoff backoff;
-
         do {
-
-//            flag = false;
-
-            while (locked.load(std::memory_order_relaxed)) {
+            while (locked.load(std::memory_order_relaxed))
+            {
                 backoff();
-            }// wait
-
-
+            }
         } while (!locked.compare_exchange_weak(flag, true, std::memory_order_acquire, std::memory_order_relaxed));
-
     }
-
     void unlock() {
         locked.store(false, std::memory_order_release);
     }
@@ -70,18 +51,14 @@ private:
 
 public:
     TAS() : locked(false) {}
-
     void lock() {
-
         bool flag = false;
         Backoff backoff;
-
-        while (!locked.compare_exchange_weak(flag, true, std::memory_order_acquire, std::memory_order_relaxed)) {
+        while (!locked.compare_exchange_weak(flag, true, std::memory_order_acquire, std::memory_order_relaxed)) 
+        {
             backoff();
         }
-
     }
-
     void unlock() {
         locked.store(false, std::memory_order_release);
     }
@@ -97,17 +74,14 @@ public:
     void lock() {
         const unsigned my_ticket = next_ticket.fetch_add(1, std::memory_order_relaxed);
         Backoff backoff;
-        while (current_ticket.load(std::memory_order_relaxed) != my_ticket) {
+        while (current_ticket.load(std::memory_order_relaxed) != my_ticket)
+        {
             backoff();
         }
         current_ticket.load(std::memory_order_acquire);
     }
-
     void unlock() {
-
         const unsigned next = current_ticket.load(std::memory_order_relaxed) + 1;
         current_ticket.store(next, std::memory_order_release);
-
-        //current_ticket.fetch_add(1, std::memory_order_release);
     }
 };
